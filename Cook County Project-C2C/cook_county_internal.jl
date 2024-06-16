@@ -30,6 +30,7 @@ using JuMP
 using CSV 
 using DataFrames #to construct comparison
 using XLSX 
+using DelimitedFiles
 
 # Setup inputs Cermak part a
 data_file = "CermakA.JSON" 
@@ -38,8 +39,29 @@ input_data = JSON.parsefile("scenarios/$data_file")
 cermak_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Cermak New.json"
 cermak_rates_1 = JSON.parsefile(cermak_rates)
 
-cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_DOC_Cermak.csv"
+function read_csv_without_bom(filepath::String)
+    # Read the file content as a string
+    file_content = read(filepath, String)
+    
+    # Remove BOM if present
+    if startswith(file_content, "\ufeff")
+        file_content = file_content[4:end]
+    end
+    
+    # Parse the CSV content as Float64, assuming no header
+    data = readdlm(IOBuffer(file_content), ',', Float64)
+    return data
+end
 
+# Define the file path
+cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/Non-shared files/REopt/C2C/Cook County/Internal/Load_profile_electric_DOC_Cermak.csv"
+
+# Read the CSV file
+cermak_loads_kw = read_csv_without_bom(cermak_electric_load)
+
+# Convert matrix to a one-dimensional array 
+cermak_loads_kw = reshape(cermak_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+cermak_loads_kw = cermak_loads_kw[8761:17520] #take off the hours and leave the loads
 println("Correctly obtained data_file")
 
 #the lat/long will be representative of the regions (MW, NE, S, W)
@@ -61,7 +83,7 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
+    input_data_site["ElectricLoad"]["loads_kw"] = cermak_loads_kw
     input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
 
     #location of PV being mounted, both, roof, or ground
@@ -75,14 +97,14 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
@@ -91,7 +113,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    sleep(60)
 end
 println("Completed optimization")
 
@@ -303,7 +325,7 @@ println("Successful write into XLSX file: $file_storage_location")
 Markham Part A
 PV+Battery
 """
-
+"""
 # Setup inputs Markham part a
 data_file = "MarkhamA.JSON" 
 input_data = JSON.parsefile("scenarios/$data_file")

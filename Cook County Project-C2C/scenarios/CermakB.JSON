@@ -2,8 +2,8 @@
     "Site": {
         "include_exported_elec_emissions_in_total": true,
         "include_exported_renewable_electricity_in_total": true,
-        "land_acres": 2,
-        "roof_squarefeet": 20000
+        "land_acres": 0,
+        "roof_squarefeet": 290000
         },
        
     "ExistingBoiler": {
@@ -30,18 +30,22 @@
                 
     },
     "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[16,16,16,16,16,16,16,16,16,16]
+        "monthly_mmbtu":[16,16,16,16,16,16,16,16,16,16, 16, 16],
+        "doe_reference_name": "FlatLoad"
         
     },
     "SpaceHeatingLoad":{
-        "monthly_mmbtu":[8285.72, 4751.86, 5237.44, 1617.11, 459.79, 0, 0, 0, 103.97, 1140.42, 3915.46, 3915.46, 4551.11],
-        "existing_boiler_efficiency": 0.75
+        "monthly_mmbtu":[8285.72, 4751.86, 5237.44, 1617.11, 459.79, 0, 0, 0, 103.97, 1140.42, 3915.46, 4551.11],
+        "existing_boiler_efficiency": 0.75,
+        "doe_reference_name": "FlatLoad"
     },
     "PV":{
+        "min_kw":25,
         "installed_cost_per_kw": 3369,
         "federal_itc_fraction": 0.4
     },
     "ElectricStorage":{
+        "min_kw": 10
 
     },
     "ASHP":{

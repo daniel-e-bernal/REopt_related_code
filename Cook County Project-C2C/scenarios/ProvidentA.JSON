@@ -30,7 +30,7 @@
                 
     },
     "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800],
+        "monthly_mmbtu":[2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800],
         "doe_reference_name": "Hospital"
         
     },

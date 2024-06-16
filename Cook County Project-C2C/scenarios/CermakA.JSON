@@ -1,18 +1,12 @@
 {
+    "Settings":{
+        "time_steps_per_hour": 1
+    },
     "Site": {
-        "include_exported_elec_emissions_in_total": true,
-        "include_exported_renewable_electricity_in_total": true,
         "land_acres": 0,
         "roof_squarefeet": 290000
         },
        
-    "ExistingBoiler": {
-        "production_type": "hot water",
-        "efficiency": 0.75,
-        "fuel_type": "natural_gas",
-        "fuel_cost_per_mmbtu": [8.64, 10.85, 8.44, 7.57, 16.78, 249.33, 249.33, 220.06, 41.45, 11.93, 9.25, 9.92]
-                       
-    },
     
     "Financial": {
         "om_cost_escalation_rate_fraction": 0.025,
@@ -29,26 +23,20 @@
     "ElectricLoad": {
                 
     },
-    "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[16,16,16,16,16,16,16,16,16,16]
-        
-    },
-    "SpaceHeatingLoad":{
-        "monthly_mmbtu":[8285.72, 4751.86, 5237.44, 1617.11, 459.79, 0, 0, 0, 103.97, 1140.42, 3915.46, 3915.46, 4551.11],
-        "existing_boiler_efficiency": 0.75
-    },
     "PV":{
+        "min_kw": 25,
         "installed_cost_per_kw": 3369,
         "federal_itc_fraction": 0.4,
         "location": "roof"
     },
     "ElectricStorage":{
+        "min_kw": 10
     
     },    
     "ElectricTariff": {
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 25
+        
     }
   }

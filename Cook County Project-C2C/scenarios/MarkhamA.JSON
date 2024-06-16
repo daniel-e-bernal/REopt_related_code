@@ -30,11 +30,11 @@
                 
     },
     "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[18,18,18,18,18,18,18,18,18,18]
+        "monthly_mmbtu":[18,18,18,18,18,18,18,18,18,18,18,18]
         
     },
     "SpaceHeatingLoad":{
-        "monthly_mmbtu":[501.88, 124.27, 191.95, 13.09, 0, 0, 0, 0, 0, 0, 10.49, 54.28, 135.46],
+        "monthly_mmbtu":[501.88, 124.27, 191.95, 13.09, 0, 0, 0, 0, 0, 10.49, 54.28, 135.46],
         "existing_boiler_efficiency": 0.75
     },
     "PV":{

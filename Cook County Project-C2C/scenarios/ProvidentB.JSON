@@ -30,12 +30,14 @@
                 
     },
     "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800]
+        "monthly_mmbtu":[2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800],
+        "doe_reference_name": "Hospital"
         
     },
     "SpaceHeatingLoad":{
         "monthly_mmbtu":[8223.26, 5265.37, 6361.41, 2879.44, 869.42, 0, 0, 0, 232.77, 1200.54, 5024.13, 6297.03],
-        "existing_boiler_efficiency": 0.75
+        "existing_boiler_efficiency": 0.75,
+        "doe_reference_name": "Hospital"
     },
     "PV":{
         "installed_cost_per_kw": 3369,
