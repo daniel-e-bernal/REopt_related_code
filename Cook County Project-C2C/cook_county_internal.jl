@@ -133,11 +133,8 @@ df = DataFrame(
     PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
     Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"]) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
@@ -152,7 +149,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -196,6 +193,11 @@ cermak_rates_1 = JSON.parsefile(cermak_rates)
 
 cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_DOC_Cermak.csv"
 
+# Read the CSV file
+cermak_loads_kw = read_csv_without_bom(cermak_electric_load)
+# Convert matrix to a one-dimensional array 
+cermak_loads_kw = reshape(cermak_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+cermak_loads_kw = cermak_loads_kw[8761:17520] #take off the hours and leave the loads
 println("Correctly obtained data_file")
 
 #the lat/long will be representative of the regions (MW, NE, S, W)
@@ -217,12 +219,9 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
+    input_data_site["ElectricLoad"]["loads_kw"] = cermak_loads_kw
     input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
     
-    #location of PV being mounted, both, roof, or ground
-    input_data_site["PV"]["location"] = "roof"
-
     #emissions reduction min 
     input_data_site["Site"]["CO2_emissions_reduction_min_fraction"] = emissions_reduction_min[i]
                 
@@ -267,7 +266,7 @@ df = DataFrame(
     PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
     Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"]) for i in sites_iter], 
     ASHP_size_tonhour = [round(site_analysis[i][2]["ASHP"]["size_ton"], digits=0) for i in sites_iter],
     ASHP_annual_electric_consumption_kwh = [round(site_analysis[i][2]["ASHP"]["annual_electric_consumption_kwh"], digits=0) for i in sites_iter],
     ASHP_annual_thermal_production_mmbtu = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_mmbtu"], digits=0) for i in sites_iter],
@@ -291,7 +290,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -325,7 +324,7 @@ println("Successful write into XLSX file: $file_storage_location")
 Markham Part A
 PV+Battery
 """
-"""
+
 # Setup inputs Markham part a
 data_file = "MarkhamA.JSON" 
 input_data = JSON.parsefile("scenarios/$data_file")
@@ -333,7 +332,14 @@ input_data = JSON.parsefile("scenarios/$data_file")
 markham_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Markham New.json"
 markham_rates_1 = JSON.parsefile(markham_rates)
 
-cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Markham.csv"
+markham_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Markham.csv"
+
+# Read the CSV file
+markham_loads_kw = read_csv_without_bom(markham_electric_load)
+
+# Convert matrix to a one-dimensional array 
+markham_loads_kw = reshape(markham_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+markham_loads_kw = markham_loads_kw[8761:17520] #take off the hours and leave the loads
 
 println("Correctly obtained data_file")
 
@@ -359,8 +365,8 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
-    input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
+    input_data_site["ElectricLoad"]["loads_kw"] = markham_loads_kw
+    input_data_site["ElectricTariff"]["urdb_response"] = markham_rates_1
     
     #existing PV on Markham
     input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
@@ -428,7 +434,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -469,7 +475,14 @@ input_data = JSON.parsefile("scenarios/$data_file")
 markham_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Markham New.json"
 markham_rates_1 = JSON.parsefile(markham_rates)
 
-cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Markham.csv"
+markham_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Markham.csv"
+
+# Read the CSV file
+markham_loads_kw = read_csv_without_bom(markham_electric_load)
+
+# Convert matrix to a one-dimensional array 
+markham_loads_kw = reshape(markham_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+markham_loads_kw = markham_loads_kw[8761:17520] #take off the hours and leave the loads
 
 println("Correctly obtained data_file")
 
@@ -495,8 +508,8 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
-    input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
+    input_data_site["ElectricLoad"]["loads_kw"] = markham_loads_kw
+    input_data_site["ElectricTariff"]["urdb_response"] = markham_rates_1
 
         #existing PV on Markham
     input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
@@ -569,7 +582,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -608,10 +621,17 @@ PV+Battery
 data_file = "ProvidentA.JSON" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-markham_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Provident New.json"
-markham_rates_1 = JSON.parsefile(markham_rates)
+provident_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Provident New.json"
+provident_rates_1 = JSON.parsefile(markham_rates)
 
-cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
+provident_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
+
+# Read the CSV file
+provident_loads_kw = read_csv_without_bom(provident_electric_load)
+
+# Convert matrix to a one-dimensional array 
+provident_loads_kw = reshape(provident_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+provident_loads_kw = provident_loads_kw[8761:17520] #take off the hours and leave the loads
 
 println("Correctly obtained data_file")
 
@@ -634,8 +654,8 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
-    input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
+    input_data_site["ElectricLoad"]["loads_kw"] = provident_loads_kw
+    input_data_site["ElectricTariff"]["urdb_response"] = provident_rates_1
     input_data_site["DomesticHotWaterLoad"]["annual_mmbtu"] = avg_ng_load[i] * 8760
 
     #emissions reduction min 
@@ -701,7 +721,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -742,8 +762,14 @@ input_data = JSON.parsefile("scenarios/$data_file")
 markham_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Provident New.json"
 markham_rates_1 = JSON.parsefile(markham_rates)
 
-cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
+provident_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
 
+# Read the CSV file
+provident_loads_kw = read_csv_without_bom(provident_electric_load)
+
+# Convert matrix to a one-dimensional array 
+provident_loads_kw = reshape(provident_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+provident_loads_kw = provident_loads_kw[8761:17520] #take off the hours and leave the loads
 
 #the lat/long will be representative of the regions (MW, NE, S, W)
 #cities chosen are Chicago, Boston, Houston, San Francisco
@@ -764,8 +790,8 @@ for i in sites_iter
     # Site Specific
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
-    input_data_site["ElectricLoad"]["path_to_csv"] = cermak_electric_load
-    input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
+    input_data_site["ElectricLoad"]["loads_kw"] = provident_loads_kw
+    input_data_site["ElectricTariff"]["urdb_response"] = provident_rates_1
     
     #emissions reduction min 
     input_data_site["Site"]["CO2_emissions_reduction_min_fraction"] = emissions_reduction_min[i]
@@ -835,7 +861,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "results/Cook_County_results.xlsx"
+file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)

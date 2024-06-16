@@ -4,7 +4,8 @@
     },
     "Site": {
         "land_acres": 0,
-        "roof_squarefeet": 290000
+        "roof_squarefeet": 290000,
+        "CO2_emissions_reduction_max_fraction": 1.00
         },
        
     
@@ -34,6 +35,7 @@
     
     },    
     "ElectricTariff": {
+        "wholesale_rate": 0.01
 
     },
     "ElectricUtility": {

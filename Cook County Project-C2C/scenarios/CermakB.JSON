@@ -3,7 +3,8 @@
         "include_exported_elec_emissions_in_total": true,
         "include_exported_renewable_electricity_in_total": true,
         "land_acres": 0,
-        "roof_squarefeet": 290000
+        "roof_squarefeet": 290000,
+        "CO2_emissions_reduction_max_fraction": 1.00
         },
        
     "ExistingBoiler": {
@@ -42,7 +43,8 @@
     "PV":{
         "min_kw":25,
         "installed_cost_per_kw": 3369,
-        "federal_itc_fraction": 0.4
+        "federal_itc_fraction": 0.4,
+        "location": "roof"
     },
     "ElectricStorage":{
         "min_kw": 10
@@ -57,6 +59,7 @@
     },
        
     "ElectricTariff": {
+        "wholesale_rate": 0.01
 
     },
     "ElectricUtility": {
