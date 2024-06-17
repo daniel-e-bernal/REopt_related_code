@@ -39,7 +39,7 @@
         "doe_reference_name": "Hospital"
     },
     "PV":{
-        "installed_cost_per_kw": 3369,
+        "installed_cost_per_kw": 1700,
         "federal_itc_fraction": 0.4,
         "location": "both",
         "utility_rebate_per_kw": 250
