@@ -28,17 +28,21 @@
         "min_kw": 25,
         "installed_cost_per_kw": 3369,
         "federal_itc_fraction": 0.4,
-        "location": "roof"
+        "location": "roof",
+        "utility_rebate_per_kw": 250
     },
     "ElectricStorage":{
-        "min_kw": 10
+        "min_kw": 10,
+        "total_itc_fraction": 0.3,
+        "total_rebate_per_kw": 250
     
     },    
     "ElectricTariff": {
-        "wholesale_rate": 0.01
+        "wholesale_rate": 0.1121
 
     },
     "ElectricUtility": {
+        "net_metering_limit_kw": 5000
         
     }
   }

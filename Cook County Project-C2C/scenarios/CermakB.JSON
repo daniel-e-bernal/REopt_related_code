@@ -1,14 +1,12 @@
 {
     "Site": {
-        "include_exported_elec_emissions_in_total": true,
-        "include_exported_renewable_electricity_in_total": true,
         "land_acres": 0,
         "roof_squarefeet": 290000,
         "CO2_emissions_reduction_max_fraction": 1.00
         },
        
     "ExistingBoiler": {
-        "production_type": "hot water",
+        "production_type": "hot_water",
         "efficiency": 0.75,
         "fuel_type": "natural_gas",
         "fuel_cost_per_mmbtu": [8.64, 10.85, 8.44, 7.57, 16.78, 249.33, 249.33, 220.06, 41.45, 11.93, 9.25, 9.92]
@@ -44,10 +42,13 @@
         "min_kw":25,
         "installed_cost_per_kw": 3369,
         "federal_itc_fraction": 0.4,
-        "location": "roof"
+        "location": "roof",
+        "utility_rebate_per_kw": 250
     },
     "ElectricStorage":{
-        "min_kw": 10
+        "min_kw": 10,
+        "total_itc_fraction": 0.3,
+        "total_rebate_per_kw": 250
 
     },
     "ASHP":{
@@ -59,10 +60,10 @@
     },
        
     "ElectricTariff": {
-        "wholesale_rate": 0.01
+        "wholesale_rate": 0.1121
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 25
+        "net_metering_limit_kw": 5000
     }
   }

@@ -113,7 +113,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(60)
+    #sleep(60)
 end
 println("Completed optimization")
 
@@ -149,6 +149,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
+file_storage_location = "C:/Users/dbernal/Documents/GitHub/REopt_related_code/Cook County Project-C2C/results/Cook_County_results.xlsx"
 file_storage_location = "./results/Cook_County_results.xlsx"
 
 # Check if the Excel file already exists
@@ -197,7 +198,7 @@ cermak_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C
 cermak_loads_kw = read_csv_without_bom(cermak_electric_load)
 # Convert matrix to a one-dimensional array 
 cermak_loads_kw = reshape(cermak_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-cermak_loads_kw = cermak_loads_kw[8761:17520] #take off the hours and leave the loads
+cermak_loads_kw = cermak_loads_kw[8761:17520] #take off the hours and leave the loads 
 println("Correctly obtained data_file")
 
 #the lat/long will be representative of the regions (MW, NE, S, W)
@@ -246,7 +247,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    #sleep(60)
 end
 println("Completed optimization")
 
@@ -395,7 +396,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    #sleep(60)
 end
 println("Completed optimization")
 
@@ -417,16 +418,11 @@ df = DataFrame(
     Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
     LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
     BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
     LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
     npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
     lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
@@ -538,7 +534,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    #sleep(60)
 end
 println("Completed optimization")
 
@@ -666,14 +662,14 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
@@ -682,7 +678,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    #sleep(60)
 end
 println("Completed optimization")
 
@@ -704,16 +700,11 @@ df = DataFrame(
     Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
     BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
     LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
     BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
     LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
     npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
     lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
@@ -801,14 +792,14 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
+     "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
      "log_to_console" => false)
@@ -817,7 +808,7 @@ for i in sites_iter
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
 
-    sleep(180)
+    #sleep(60)
 end
 println("Completed optimization")
 
