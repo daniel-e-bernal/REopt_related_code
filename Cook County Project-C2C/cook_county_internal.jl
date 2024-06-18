@@ -32,6 +32,24 @@ using DataFrames #to construct comparison
 using XLSX 
 using DelimitedFiles
 
+#defining functions necessary for code to run
+
+# Function to safely extract values from JSON with default value if key is missing
+function safe_get(data::Dict{String, Any}, keys::Vector{String}, default="infeasible")
+    try
+        for k in keys
+            data = data[k]
+        end
+        return data
+    catch e
+        if e isa KeyError
+            return default
+        else
+            rethrow(e)
+        end
+    end
+end
+
 # Setup inputs Cermak part a
 data_file = "CermakA.JSON" 
 input_data = JSON.parsefile("scenarios/$data_file")
@@ -124,27 +142,35 @@ println("Successfully printed results on JSON file")
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"]) for i in sites_iter], 
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
     )
 println(df)
 
@@ -231,15 +257,15 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )            
@@ -252,42 +278,52 @@ end
 println("Completed optimization")
 
 #write onto JSON file
-write.("./results/cook_county_cermakA.json", JSON.json(site_analysis))
+write.("./results/cook_county_cermakB.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"]) for i in sites_iter], 
-    ASHP_size_tonhour = [round(site_analysis[i][2]["ASHP"]["size_ton"], digits=0) for i in sites_iter],
-    ASHP_annual_electric_consumption_kwh = [round(site_analysis[i][2]["ASHP"]["annual_electric_consumption_kwh"], digits=0) for i in sites_iter],
-    ASHP_annual_thermal_production_mmbtu = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_mmbtu"], digits=0) for i in sites_iter],
-    ASHP_annual_cooling_tonhour = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_tonhour"], digits=0) for i in sites_iter],
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Annual_Total_HeatingLoad_MMBtu = [round(site_analysis[i][2]["HeatingLoad"]["annual_calculated_total_heating_thermal_load_mmbtu"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
-    )
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    ASHP_size_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "size_ton"]), digits=0) for i in sites_iter],
+    ASHP_annual_electric_consumption_kwh = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_electric_consumption_kwh"]), digits=0) for i in sites_iter],
+    ASHP_annual_thermal_production_mmbtu = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_mmbtu"]), digits=0) for i in sites_iter],
+    ASHP_annual_cooling_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_tonhour"]), digits=0) for i in sites_iter],
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Annual_Total_HeatingLoad_MMBtu = [round(safe_get(site_analysis[i][2], ["HeatingLoad", "annual_calculated_total_heating_thermal_load_mmbtu"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu_bau"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_thermal_production_mmbtu_bau"]), digits=0) for i in sites_iter],
+    NG_Annual_Consumption_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    NG_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_from_fuelburn_tonnes_CO2"]), digits=2) for i in sites_iter],
+    Emissions_from_NG = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_from_fuelburn_tonnes_CO2"]), digits=0) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
+)
 println(df)
 
 # Define path to xlsx file
@@ -380,15 +416,15 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )            
@@ -407,25 +443,35 @@ println("Successfully printed results on JSON file")
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
     )
 println(df)
 
@@ -518,15 +564,15 @@ for i in sites_iter
 
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
-     "time_limit" => 450.0,
-     "mip_rel_gap" => 0.01,
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )            
@@ -545,36 +591,46 @@ println("Successfully printed results on JSON file")
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
-    ASHP_size_tonhour = [round(site_analysis[i][2]["ASHP"]["size_ton"], digits=0) for i in sites_iter],
-    ASHP_annual_electric_consumption_kwh = [round(site_analysis[i][2]["ASHP"]["annual_electric_consumption_kwh"], digits=0) for i in sites_iter],
-    ASHP_annual_thermal_production_mmbtu = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_mmbtu"], digits=0) for i in sites_iter],
-    ASHP_annual_cooling_tonhour = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_tonhour"], digits=0) for i in sites_iter],
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Annual_Total_HeatingLoad_MMBtu = [round(site_analysis[i][2]["HeatingLoad"]["annual_calculated_total_heating_thermal_load_mmbtu"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
-    )
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    ASHP_size_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "size_ton"]), digits=0) for i in sites_iter],
+    ASHP_annual_electric_consumption_kwh = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_electric_consumption_kwh"]), digits=0) for i in sites_iter],
+    ASHP_annual_thermal_production_mmbtu = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_mmbtu"]), digits=0) for i in sites_iter],
+    ASHP_annual_cooling_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_tonhour"]), digits=0) for i in sites_iter],
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Annual_Total_HeatingLoad_MMBtu = [round(safe_get(site_analysis[i][2], ["HeatingLoad", "annual_calculated_total_heating_thermal_load_mmbtu"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu_bau"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_thermal_production_mmbtu_bau"]), digits=0) for i in sites_iter],
+    NG_Annual_Consumption_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    NG_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_from_fuelburn_tonnes_CO2"]), digits=2) for i in sites_iter],
+    Emissions_from_NG = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_from_fuelburn_tonnes_CO2"]), digits=0) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
+)
 println(df)
 
 # Define path to xlsx file
@@ -689,25 +745,35 @@ println("Successfully printed results on JSON file")
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
     )
 println(df)
 
@@ -793,14 +859,14 @@ for i in sites_iter
      # HiGHS solver
      m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
      "time_limit" => 600.0,
-     "mip_rel_gap" => 0.01,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )
 
     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
      "time_limit" => 600.0,
-     "mip_rel_gap" => 0.01,
+     "mip_rel_gap" => 0.02,
      "output_flag" => false, 
      "log_to_console" => false)
      )            
@@ -813,42 +879,52 @@ end
 println("Completed optimization")
 
 #write onto JSON file
-write.("./results/cook_county_provientB.json", JSON.json(site_analysis))
+write.("./results/cook_county_providentB.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     City = cities,
-    PV_size = [round(site_analysis[i][2]["PV"]["size_kw"], digits=0) for i in sites_iter],
-    PV_year1_production = [round(site_analysis[i][2]["PV"]["year_one_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_annual_energy_production_avg = [round(site_analysis[i][2]["PV"]["annual_energy_produced_kwh"], digits=0) for i in sites_iter],
-    PV_energy_lcoe = [round(site_analysis[i][2]["PV"]["lcoe_per_kwh"], digits=0) for i in sites_iter],
-    PV_energy_exported = [round(site_analysis[i][2]["PV"]["annual_energy_exported_kwh"], digits=0) for i in sites_iter],
-    PV_energy_curtailed = [sum(site_analysis[i][2]["PV"]["electric_curtailed_series_kw"]) for i in sites_iter],
-    PV_energy_to_Battery_year1 = [sum(site_analysis[i][2]["PV"]["electric_to_storage_series_kw"]) for i in sites_iter],
-    Battery_size_kW = [round(site_analysis[i][2]["ElectricStorage"]["size_kw"], digits=0) for i in sites_iter], 
-    Battery_size_kWh = [round(site_analysis[i][2]["ElectricStorage"]["size_kwh"], digits=0) for i in sites_iter], 
-    Battery_serve_electric_load = [sum(site_analysis[i][2]["ElectricStorage"]["storage_to_load_series_kw"], digits=0) for i in sites_iter], 
-    ASHP_size_tonhour = [round(site_analysis[i][2]["ASHP"]["size_ton"], digits=0) for i in sites_iter],
-    ASHP_annual_electric_consumption_kwh = [round(site_analysis[i][2]["ASHP"]["annual_electric_consumption_kwh"], digits=0) for i in sites_iter],
-    ASHP_annual_thermal_production_mmbtu = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_mmbtu"], digits=0) for i in sites_iter],
-    ASHP_annual_cooling_tonhour = [round(site_analysis[i][2]["ASHP"]["annual_thermal_production_tonhour"], digits=0) for i in sites_iter],
-    Grid_Electricity_Supplied_kWh_annual = [round(site_analysis[i][2]["ElectricUtility"]["annual_energy_supplied_kwh"], digits=0) for i in sites_iter],
-    Annual_Total_HeatingLoad_MMBtu = [round(site_analysis[i][2]["HeatingLoad"]["annual_calculated_total_heating_thermal_load_mmbtu"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu_bau"], digits=0) for i in sites_iter],
-    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_thermal_production_mmbtu_bau"], digits=0) for i in sites_iter],
-    NG_Annual_Consumption_MMBtu = [round(site_analysis[i][2]["ExistingBoiler"]["annual_fuel_consumption_mmbtu"], digits=0) for i in sites_iter],
-    Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    ElecUtility_Annual_Emissions_CO2 = [round(site_analysis[i][2]["ElectricUtility"]["annual_emissions_tonnes_CO2"], digits=4) for i in sites_iter],
-    BAU_Total_Annual_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["annual_emissions_tonnes_CO2_bau"], digits=4) for i in sites_iter],
-    LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2"], digits=2) for i in sites_iter],
-    BAU_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_tonnes_CO2_bau"], digits=2) for i in sites_iter],
-    NG_LifeCycle_Emissions_CO2 = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_from_fuelburn_tonnes_CO2"], digits=2) for i in sites_iter],
-    Emissions_from_NG = [round(site_analysis[i][2]["Site"]["annual_emissions_from_fuelburn_tonnes_CO2"], digits=0) for i in sites_iter],
-    LifeCycle_Emission_Reduction_Fraction = [round(site_analysis[i][2]["Site"]["lifecycle_emissions_reduction_CO2_fraction"], digits=2) for i in sites_iter],
-    npv = [round(site_analysis[i][2]["Financial"]["npv"], digits=2) for i in sites_iter],
-    lcc = [round(site_analysis[i][2]["Financial"]["lcc"], digits=2) for i in sites_iter]
-    )
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    ASHP_size_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "size_ton"]), digits=0) for i in sites_iter],
+    ASHP_annual_electric_consumption_kwh = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_electric_consumption_kwh"]), digits=0) for i in sites_iter],
+    ASHP_annual_thermal_production_mmbtu = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_mmbtu"]), digits=0) for i in sites_iter],
+    ASHP_annual_cooling_tonhour = [round(safe_get(site_analysis[i][2], ["ASHP", "annual_thermal_production_tonhour"]), digits=0) for i in sites_iter],
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Annual_Total_HeatingLoad_MMBtu = [round(safe_get(site_analysis[i][2], ["HeatingLoad", "annual_calculated_total_heating_thermal_load_mmbtu"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Fuel_Consump_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu_bau"]), digits=0) for i in sites_iter],
+    BAU_Existing_Boiler_Thermal_Prod_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_thermal_production_mmbtu_bau"]), digits=0) for i in sites_iter],
+    NG_Annual_Consumption_MMBtu = [round(safe_get(site_analysis[i][2], ["ExistingBoiler", "annual_fuel_consumption_mmbtu"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    NG_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_from_fuelburn_tonnes_CO2"]), digits=2) for i in sites_iter],
+    Emissions_from_NG = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_from_fuelburn_tonnes_CO2"]), digits=0) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
+)
 println(df)
 
 # Define path to xlsx file

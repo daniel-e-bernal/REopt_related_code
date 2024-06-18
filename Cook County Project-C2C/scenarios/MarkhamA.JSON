@@ -1,18 +1,12 @@
 {
-    "Site": {
-        
-        "land_acres": 3,
-        "roof_squarefeet": 20000
-        },
-       
-    "ExistingBoiler": {
-        "production_type": "hot_water",
-        "efficiency": 0.75,
-        "fuel_type": "natural_gas",
-        "fuel_cost_per_mmbtu": [9.48, 12.72, 11.94, 23.41, 41.08, 103.30, 103.30, 87.56, 66.52, 28.24, 14.99, 12.01]
-                       
+    "Settings":{
+        "time_steps_per_hour": 1
     },
-    
+    "Site": {
+        "land_acres": 3,
+        "roof_squarefeet": 74000
+        },
+        
     "Financial": {
         "om_cost_escalation_rate_fraction": 0.025,
         "elec_cost_escalation_rate_fraction": 0.023,
@@ -21,23 +15,16 @@
         "offtaker_tax_rate_fraction": 0.26,
         "offtaker_discount_rate_fraction": 0.083,
         "third_party_ownership": false,
-        "owner_tax_rate_fraction": 0.26,
+        "owner_tax_rate_fraction": 0.00,
         "owner_discount_rate_fraction": 0.083,
         "analysis_years": 25
     },
     "ElectricLoad": {
                 
     },
-    "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[18,18,18,18,18,18,18,18,18,18,18,18]
-        
-    },
-    "SpaceHeatingLoad":{
-        "monthly_mmbtu":[501.88, 124.27, 191.95, 13.09, 0, 0, 0, 0, 0, 10.49, 54.28, 135.46],
-        "existing_boiler_efficiency": 0.75
-    },
+    
     "PV":{
-        "installed_cost_per_kw": 4000,
+        "installed_cost_per_kw": 4036,
         "federal_itc_fraction": 0.4,
         "location": "both",
         "utility_rebate_per_kw": 250
@@ -47,10 +34,12 @@
         "total_rebate_per_kw": 250
     },    
     "ElectricTariff": {
-        "wholesale_rate": 0.1121
+        "wholesale_rate": 0.056
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 5000
+        "net_metering_limit_kw": 5000,
+        "outage_probabilities": [1.0],
+        "outage_start_time_steps": [1080, 3240, 4320, 6480, 7800]
     }
   }

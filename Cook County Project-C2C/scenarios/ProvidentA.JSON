@@ -1,17 +1,12 @@
 {
+    "Settings":{
+        "time_steps_per_hour": 1
+    },
     "Site": {
-        
         "land_acres": 1.23506841139,
         "roof_squarefeet": 13096
         },
        
-    "ExistingBoiler": {
-        "production_type": "hot_water",
-        "efficiency": 0.75,
-        "fuel_type": "natural_gas",
-        "fuel_cost_per_mmbtu": [7.80, 9.97, 7.89, 9.44, 9.91, 10.33, 10.35, 10.41, 9.97, 9.51, 8.71, 8.97]
-                        
-    },
     
     "Financial": {
         "om_cost_escalation_rate_fraction": 0.025,
@@ -21,25 +16,16 @@
         "offtaker_tax_rate_fraction": 0.26,
         "offtaker_discount_rate_fraction": 0.083,
         "third_party_ownership": false,
-        "owner_tax_rate_fraction": 0.26,
+        "owner_tax_rate_fraction": 0.00,
         "owner_discount_rate_fraction": 0.083,
         "analysis_years": 25
     },
     "ElectricLoad": {
                 
     },
-    "DomesticHotWaterLoad":{
-        "monthly_mmbtu":[2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800],
-        "doe_reference_name": "Hospital"
-        
-    },
-    "SpaceHeatingLoad":{
-        "monthly_mmbtu":[8223.26, 5265.37, 6361.41, 2879.44, 869.42, 0, 0, 0, 232.77, 1200.54, 5024.13, 6297.03],
-        "existing_boiler_efficiency": 0.75,
-        "doe_reference_name": "Hospital"
-    },
+    
     "PV":{
-        "installed_cost_per_kw": 1700,
+        "installed_cost_per_kw": 4036,
         "federal_itc_fraction": 0.4,
         "location": "both",
         "utility_rebate_per_kw": 250
@@ -49,15 +35,14 @@
         "total_rebate_per_kw": 250
 
     },
-    "ASHP":{
-        "force_into_system": false
-    },
-       
+    
     "ElectricTariff": {
-        "wholesale_rate": 0.1121
+        "wholesale_rate": 0.056
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 5000
+        "net_metering_limit_kw": 5000,
+        "outage_probabilities": [1.0],
+        "outage_start_time_steps": [1080, 3240, 4320, 6480, 7800]
     }
   }
