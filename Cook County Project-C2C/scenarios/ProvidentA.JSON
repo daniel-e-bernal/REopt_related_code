@@ -23,7 +23,10 @@
     "ElectricLoad": {
                 
     },
-    
+    "Generator":{
+        "fuel_cost_per_gallon":3.88,
+        "fuel_avail_gal": 2000
+    },
     "PV":{
         "installed_cost_per_kw": 4036,
         "federal_itc_fraction": 0.4,

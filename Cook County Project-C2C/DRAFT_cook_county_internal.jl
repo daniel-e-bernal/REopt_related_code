@@ -58,8 +58,8 @@ end
 function ERP_run(; REopt_results = "", REopt_post_inputs = "", post = "", maximumoutageduration = "") 
     if "Generator" in keys(REopt_results)
         num_gen = 1
-        each_gen_kw = round(REopt_results["Generator"]["size_kw"] / num_gen; digits=0)
-        FuelAvailable = REopt_post_inputs["Generator"]["fuel_avail_gal"]
+        each_gen_kw = round((REopt_results["Generator"]["size_kw"]) / num_gen, digits=0)
+        FuelAvailable = post["Generator"]["fuel_avail_gal"]
     else
         each_gen_kw = 0
         num_gen = 0
@@ -204,7 +204,7 @@ function ERP_run(; REopt_results = "", REopt_post_inputs = "", post = "", maximu
         Plots.xlabel!("Month Number")
         Plots.ylabel!("Probability")
         display(Plots.title!("Data for survival of the maximum outage length, by month")) """
-        fig_saving = [1, 2, 3]
+        fig_saving = [1]
         for i in eachindex(fig_saving)
             # Generate plots
             p1 = plot(Hours, 100 * reliability_results["mean_cumulative_survival_by_duration"], label="ERP results")
@@ -261,7 +261,7 @@ long = [-88.044, -88.044, -88.044]
 column_inputs = ["inputs", "inputs", "inputs"]
 
 #emissions reduction fraction every scenario by 10%
-emissions_reduction_min = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
+#emissions_reduction_min = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
 #hours of outage to sustain
 outage_minimum_sustain = [8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
 outage_durations = [8, 16, 24] #"ElectricUtility""outage_duration"
@@ -332,6 +332,10 @@ df = DataFrame(
     Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=0) for i in sites_iter], 
+    Generator_size = [round(safe_get(site_analysis[i][2], ["Generator", "size_kw"]), digits=2) for i in sites_iter],
+    Generator_annual_fuel_consumption = [round(safe_get(site_analysis[i][2], ["Generator", "annual_fuel_consumption_gal"]), digits=2) for i in sites_iter],
+    Generator_annual_energy_produced = [round(safe_get(site_analysis[i][2], ["Generator", "annual_energy_produced_kwh"]), digits=2) for i in sites_iter],
     Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
@@ -340,7 +344,7 @@ df = DataFrame(
     BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
     LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
     LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
-    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
     Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
@@ -437,12 +441,8 @@ for i in sites_iter
     input_data_site["ElectricTariff"]["urdb_response"] = markham_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
 
-    
     #existing PV on Markham
     input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
-
-    #emissions reduction min 
-    input_data_site["Site"]["CO2_emissions_reduction_min_fraction"] = emissions_reduction_min[i]
                 
     s = Scenario(input_data_site)
     inputs = REoptInputs(s)
@@ -492,6 +492,7 @@ df = DataFrame(
     Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=2) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
@@ -500,7 +501,7 @@ df = DataFrame(
     BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
     LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
     LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
-    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
     Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
@@ -644,7 +645,11 @@ df = DataFrame(
     Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=0) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Generator_size = [round(safe_get(site_analysis[i][2], ["Generator", "size_kw"]), digits=0) for i in sites_iter],
+    Generator_annual_fuel_consumption = [round(safe_get(site_analysis[i][2], ["Generator", "annual_fuel_consumption_gal"]), digits=0) for i in sites_iter],
+    Generator_annual_energy_produced = [round(safe_get(site_analysis[i][2], ["Generator", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
@@ -652,7 +657,7 @@ df = DataFrame(
     BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
     LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
     LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
-    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
     Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
     Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
@@ -673,7 +678,7 @@ file_storage_location = "./results/Cook_County_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 2
         while true
             sheet_name = "ProvidentA_" * string(counter)
             try
