@@ -10,14 +10,14 @@
     
     "Financial": {
         "om_cost_escalation_rate_fraction": 0.025,
-        "elec_cost_escalation_rate_fraction": 0.023,
-        "existing_boiler_fuel_cost_escalation_rate_fraction": 0.034,
-        "boiler_fuel_cost_escalation_rate_fraction": 0.034,
+        "elec_cost_escalation_rate_fraction": 0.017,
+        "existing_boiler_fuel_cost_escalation_rate_fraction": 0.015,
+        "boiler_fuel_cost_escalation_rate_fraction": 0.015,
         "offtaker_tax_rate_fraction": 0.26,
-        "offtaker_discount_rate_fraction": 0.083,
+        "offtaker_discount_rate_fraction": 0.0638,
         "third_party_ownership": false,
-        "owner_tax_rate_fraction": 0.00,
-        "owner_discount_rate_fraction": 0.083,
+        "owner_tax_rate_fraction": 0.0,
+        "owner_discount_rate_fraction": 0.0638,
         "analysis_years": 25
     },
     "ElectricLoad": {
