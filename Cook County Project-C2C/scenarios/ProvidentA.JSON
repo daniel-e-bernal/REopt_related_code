@@ -44,7 +44,7 @@
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 5000,
+        "net_metering_limit_kw": 2000,
         "outage_probabilities": [1.0],
         "outage_start_time_steps": [1080, 3240, 4320, 6480, 7800]
     }
