@@ -62,6 +62,6 @@
 
     },
     "ElectricUtility": {
-        "net_metering_limit_kw": 5000
+        "net_metering_limit_kw": 2000
     }
   }

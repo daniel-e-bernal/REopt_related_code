@@ -30,7 +30,6 @@
     "PV":{
         "installed_cost_per_kw": 4036,
         "federal_itc_fraction": 0.4,
-        "location": "both",
         "utility_rebate_per_kw": 250
     },
     "ElectricStorage":{
