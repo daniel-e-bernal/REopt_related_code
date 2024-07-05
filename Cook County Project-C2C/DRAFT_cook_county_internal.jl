@@ -261,7 +261,7 @@ outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_re
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 #fixed generator size given Cermak peak load of 600 kW
 fixed_generator_size = [600, 600, 600, 300, 300, 300]
@@ -432,7 +432,7 @@ outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 #critical load fraction
 critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
 
-#fixed generator size given Markham peak load of 600 kW... may not be used
+#fixed generator size given Markham peak load of 938 kW... may not be used
 fixed_generator_size = [938, 938, 938, 469, 469, 469]
 
 #Existing PV at Markham
@@ -587,11 +587,11 @@ lat = [ 41.834, 41.834, 41.834, 41.834, 41.834, 41.834]
 long = [-88.044, -88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
-outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
+outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0]
 
 #fixed generator size given Markham peak load of 600 kW... may not be used
 fixed_generator_size = [2192, 2192, 2192, 1096, 1096, 1096]
