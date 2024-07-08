@@ -24,8 +24,8 @@
                 
     },
     "Generator":{
-        "fuel_cost_per_gallon":3.88,
-        "fuel_avail_gal": 2000
+        "fuel_cost_per_gallon":3.39,
+        "fuel_avail_gal": 100000000
     },
     "PV":{
         "installed_cost_per_kw": 4036,

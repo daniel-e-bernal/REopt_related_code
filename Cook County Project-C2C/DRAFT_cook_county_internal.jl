@@ -285,7 +285,7 @@ for i in sites_iter
     if fixed_generator_size[i] > 300
         #generator fixed size
         input_data_site["Generator"]["existing_kw"] = 600
-        input_data_site["ElectricStorage"]["max_kw"] = 0
+        
     else
         input_data_site["Generator"]["existing_kw"] = 300
         input_data_site["Generator"]["max_kw"] = 0
@@ -582,19 +582,19 @@ provident_loads_kw = provident_loads_kw[8761:17520] #take off the hours and leav
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
-cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
-lat = [ 41.834, 41.834, 41.834, 41.834, 41.834, 41.834]
-long = [-88.044, -88.044, -88.044, -88.044, -88.044, -88.044]
+cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
+lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
+long = [-88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
 outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
 outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0]
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 0.75]
 
-#fixed generator size given Markham peak load of 600 kW... may not be used
-fixed_generator_size = [2192, 2192, 2192, 1096, 1096, 1096]
+#fixed generator size given Markham peak load of 2192 kW... may not be used
+fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -610,15 +610,16 @@ for i in sites_iter
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
     input_data_site["ElectricTariff"]["urdb_response"] = provident_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
+    input_data_site["PV"]["min_kw"] = 10
     
-    #if loop statement to not size batteries if existing Generator is over 300 kW
+    #if loop statement to not size batteries if existing Generator is over 1096 kW
     if fixed_generator_size[i] > 1096
         #generator fixed size
         input_data_site["Generator"]["existing_kw"] = 2192
-        input_data_site["ElectricStorage"]["max_kw"] = 0
+        input_data_site["ElectricStorage"]["max_kw"] = 200
     else
         input_data_site["Generator"]["existing_kw"] = 1096
-        input_data_site["Generator"]["max_kw"] = 0
+        input_data_site["ElectricStorage"]["min_kw"] = 10
     end
                 
     s = Scenario(input_data_site)
@@ -646,7 +647,11 @@ for i in sites_iter
     OutageSurvival = zeros(sites_iter)
     AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
     append!(ERP_results, AllResilienceResults)
+    println("================================================")
+    println("================================================")
     println("Completed Optimization run #$i for Provident")
+    println("================================================")
+    println("================================================")
 end
 println("Completed optimization")
 
@@ -702,7 +707,7 @@ file_storage_location = "./results/Cook_County_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 2
+        counter = 16
         while true
             sheet_name = "ProvidentA_" * string(counter)
             try
