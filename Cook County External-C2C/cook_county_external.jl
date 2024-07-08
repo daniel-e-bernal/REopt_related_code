@@ -28,13 +28,6 @@ function safe_get(data::Dict{String, Any}, keys::Vector{String}, default=0)
     end
 end
 
-# Setup inputs Cermak part a
-data_file = "Cornerstone.JSON" 
-input_data = JSON.parsefile("scenarios/$data_file")
-
-#cer_rates = 
-#cermak_rates_1 = JSON.parsefile()
-
 function read_csv_without_bom(filepath::String)
     # Read the file content as a string
     file_content = read(filepath, String)
@@ -238,16 +231,28 @@ function ERP_run(; REopt_results = "", REopt_post_inputs = "", post = "", maximu
 
         return reliability_results, ProbabilityOfSurvivingMaximumOutageLength_percent
 end 
+"""
+=================================================================================================
+Cornerstone Building
+=================================================================================================
+"""
+
+# Setup inputs Cermak part a
+data_file = "Cornerstone.json" 
+input_data = JSON.parsefile("scenarios/$data_file")
+
+cornerstone_rates = 
+cornerstone_rates_1 = JSON.parsefile()
 
 # Define the file path
-#_electric_load = 
+cornerstone_electric_load = 
 
 # Read the CSV file
-cermak_loads_kw = read_csv_without_bom(cermak_electric_load)
+cornerstone_loads_kw = read_csv_without_bom(cornerstone_electric_load)
 
 # Convert matrix to a one-dimensional array 
-cermak_loads_kw = reshape(cermak_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-cermak_loads_kw = cermak_loads_kw[8761:17520] #take off the hours and leave the loads
+cornerstone_loads_kw = reshape(cornerstone_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+cornerstone_loads_kw = cornerstone_loads_kw[8761:17520] #take off the hours and leave the loads
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
@@ -263,7 +268,7 @@ outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 #fixed generator size given Cermak peak load of 600 kW
-fixed_generator_size = [600, 600, 600, 300, 300, 300]
+#fixed_generator_size = [600, 600, 600, 300, 300, 300]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -275,9 +280,9 @@ for i in sites_iter
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
     input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-    input_data_site["ElectricLoad"]["loads_kw"] = cermak_loads_kw
+    input_data_site["ElectricLoad"]["loads_kw"] = cornerstone_loads_kw
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
-    input_data_site["ElectricTariff"]["urdb_response"] = cermak_rates_1
+    input_data_site["ElectricTariff"]["urdb_response"] = cornerstone_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
 
     #if loop statement to not size batteries if existing Generator is over 300 kW
@@ -314,20 +319,22 @@ for i in sites_iter
     OutageSurvival = zeros(sites_iter)
     AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
     append!(ERP_results, AllResilienceResults) # Append the resilience results
-    println("Completed Optimization run #$i for Cermak")
+    println("Completed Optimization run #$i for Cornerstone")
 end
 println("Completed optimization")
 
 
 #write onto JSON file
-write.("./results/cook_county_cermakA.json", JSON.json(site_analysis))
+write.("./results/cornerstone.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
-write.("./results/cook_county_cermakA_ERP.json", JSON.json(ERP_results))
+write.("./results/cornerstone_ERP.json", JSON.json(ERP_results))
 println("Successfuly printed ERP results onto JSON file")
+
+scenarios = ["Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4", "Scenario 5", "Scenario 6"]
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    City = cities,
+    City = scenarios,
     PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
     PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
@@ -365,7 +372,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "C:/Users/dbernal/Documents/GitHub/REopt_related_code/Cook County Project-C2C/results/Cook_County_results.xlsx"
+file_storage_location = "./results/cook_county_external_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -373,7 +380,7 @@ if isfile(file_storage_location)
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
         counter = 0
         while true
-            sheet_name = "CermakA_" * string(counter)
+            sheet_name = "Cornerstone_" * string(counter)
             try
                 sheet = xf[sheet_name]
                 counter += 1
@@ -381,7 +388,7 @@ if isfile(file_storage_location)
                 break
             end
         end
-        sheet_name = "CermakA_" * string(counter)
+        sheet_name = "Cornerstone_" * string(counter)
         # Add new sheet
         XLSX.addsheet!(xf, sheet_name)
         # Write DataFrame to the new sheet
@@ -397,25 +404,25 @@ println("Successful write into XLSX file: $file_storage_location")
 
 """
 =======================================================================================================================================================================
-Markham Part A
-PV+Battery
+Cottage Grove
+=======================================================================================================================================================================
 """
 
 # Setup inputs Markham part a
-data_file = "MarkhamA.JSON" 
+data_file = "CottageGrove.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-markham_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Markham New.json"
-markham_rates_1 = JSON.parsefile(markham_rates)
+cottagegrove_rates = #input path for urdb
+cottagegrove_rates_1 = JSON.parsefile(cottagegrove_rates)
 
-markham_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Markham.csv"
+cottagegrove_electric_load = #input path for csv load profile
 
 # Read the CSV file
-markham_loads_kw = read_csv_without_bom(markham_electric_load)
+cottagegrove_loads_kw = read_csv_without_bom(cottagegrove_electric_load)
 
 # Convert matrix to a one-dimensional array 
-markham_loads_kw = reshape(markham_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-markham_loads_kw = markham_loads_kw[8761:17520] #take off the hours and leave the loads
+cottagegrove_loads_kw = reshape(cottagegrove_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+cottagegrove_loads_kw = cottagegrove_loads_kw[8761:17520] #take off the hours and leave the loads
 
 println("Correctly obtained data_file")
 
@@ -432,10 +439,10 @@ outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
 
 #fixed generator size given Markham peak load of 938 kW... may not be used
-fixed_generator_size = [938, 938, 938, 469, 469, 469]
+#fixed_generator_size = [938, 938, 938, 469, 469, 469]
 
-#Existing PV at Markham
-markham_existing_pv = [743, 743, 743, 743, 743, 743]
+#Existing PV 
+#markham_existing_pv = [743, 743, 743, 743, 743, 743]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -447,13 +454,13 @@ for i in sites_iter
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
     input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-    input_data_site["ElectricLoad"]["loads_kw"] = markham_loads_kw
+    input_data_site["ElectricLoad"]["loads_kw"] = cottagegrove_loads_kw
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
-    input_data_site["ElectricTariff"]["urdb_response"] = markham_rates_1
+    input_data_site["ElectricTariff"]["urdb_response"] = cottagegrove_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
 
     #existing PV on Markham
-    input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
+    #input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
                 
     s = Scenario(input_data_site)
     inputs = REoptInputs(s)
@@ -480,19 +487,19 @@ for i in sites_iter
     OutageSurvival = zeros(sites_iter)
     AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
     append!(ERP_results, AllResilienceResults)
-    println("Completed Optimization run #$i for Markham")
+    println("Completed Optimization run #$i for Cottage Grove")
 end
 println("Completed optimization")
 
 #write onto JSON file
-write.("./results/cook_county_markhamA.json", JSON.json(site_analysis))
+write.("./results/cottagegrove.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
-write.("./results/cook_county_markhamA_ERP.json", JSON.json(ERP_results))
+write.("./results/cottagegrove_ERP.json", JSON.json(ERP_results))
 println("Successfuly printed ERP results onto JSON file")
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    City = cities,
+    City = scenarios,
     PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
     PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
@@ -527,7 +534,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "./results/Cook_County_results.xlsx"
+file_storage_location = "./results/cook_county_external_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -535,7 +542,7 @@ if isfile(file_storage_location)
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
         counter = 0
         while true
-            sheet_name = "MarkhamA_" * string(counter)
+            sheet_name = "CottageGrove_" * string(counter)
             try
                 sheet = xf[sheet_name]
                 counter += 1
@@ -543,7 +550,7 @@ if isfile(file_storage_location)
                 break
             end
         end
-        sheet_name = "MarkhamA_" * string(counter)
+        sheet_name = "CottageGrove_" * string(counter)
         # Add new sheet
         XLSX.addsheet!(xf, sheet_name)
         # Write DataFrame to the new sheet
@@ -558,25 +565,25 @@ println("Successful write into XLSX file: $file_storage_location")
 
 """
 =======================================================================================================================================================================
-Provident Part A
-PV+Battery
+Phillips School
+=======================================================================================================================================================================
 """
 
 # Setup inputs Provident part a
-data_file = "ProvidentA.JSON" 
+data_file = "PhillipsSchool.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-provident_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Provident New.json"
-provident_rates_1 = JSON.parsefile(markham_rates)
+phillips_rates = #input path to urdb
+phillips_rates_1 = JSON.parsefile(phillips_rates)
 
-provident_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
+phillips_electric_load = #input path to phillips electric load csv
 
 # Read the CSV file
-provident_loads_kw = read_csv_without_bom(provident_electric_load)
+phillips_loads_kw = read_csv_without_bom(phillips_electric_load)
 
 # Convert matrix to a one-dimensional array 
-provident_loads_kw = reshape(provident_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-provident_loads_kw = provident_loads_kw[8761:17520] #take off the hours and leave the loads
+phillips_loads_kw = reshape(phillips_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+phillips_loads_kw = phillips_loads_kw[8761:17520] #take off the hours and leave the loads
 
 println("Correctly obtained data_file")
 
@@ -586,14 +593,14 @@ lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
 long = [-88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
-outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
+outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
 critical_load_frac = [1.0, 1.0, 1.0, 1.0, 0.75]
 
 #fixed generator size given Markham peak load of 2192 kW... may not be used
-fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
+#fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -605,9 +612,9 @@ for i in sites_iter
     input_data_site["Site"]["latitude"] = lat[i]
     input_data_site["Site"]["longitude"] = long[i]
     input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-    input_data_site["ElectricLoad"]["loads_kw"] = provident_loads_kw
+    input_data_site["ElectricLoad"]["loads_kw"] = phillips_loads_kw
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
-    input_data_site["ElectricTariff"]["urdb_response"] = provident_rates_1
+    input_data_site["ElectricTariff"]["urdb_response"] = phillips_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
     input_data_site["PV"]["min_kw"] = 10
     
@@ -648,21 +655,21 @@ for i in sites_iter
     append!(ERP_results, AllResilienceResults)
     println("================================================")
     println("================================================")
-    println("Completed Optimization run #$i for Provident")
+    println("Completed Optimization run #$i for Phillips Schools")
     println("================================================")
     println("================================================")
 end
 println("Completed optimization")
 
 #write onto JSON file
-write.("./results/cook_county_providentA.json", JSON.json(site_analysis))
+write.("./results/phillips_school.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
-write.("./results/cook_county_providentA_ERP.json", JSON.json(ERP_results))
-println("Successfully printed ProvidentA ERP results on JSON file")
+write.("./results/phillips_school_ERP.json", JSON.json(ERP_results))
+println("Successfully printed Phillips School ERP results on JSON file")
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    City = cities,
+    City = scenarios,
     PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
     PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
@@ -700,15 +707,15 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "./results/Cook_County_results.xlsx"
+file_storage_location = "./results/cook_county_external_results.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 16
+        counter = 0
         while true
-            sheet_name = "ProvidentA_" * string(counter)
+            sheet_name = "Phillips_" * string(counter)
             try
                 sheet = xf[sheet_name]
                 counter += 1
@@ -716,7 +723,180 @@ if isfile(file_storage_location)
                 break
             end
         end
-        sheet_name = "ProvdientA_" * string(counter)
+        sheet_name = "Phillips_" * string(counter)
+        # Add new sheet
+        XLSX.addsheet!(xf, sheet_name)
+        # Write DataFrame to the new sheet
+        XLSX.writetable!(xf[sheet_name], df)
+    end
+else
+    # Write DataFrame to a new Excel file
+    XLSX.writetable!(file_storage_location, df)
+end
+
+println("Successful write into XLSX file: $file_storage_location")
+
+"""
+=======================================================================================================================================================================
+Harvey
+=======================================================================================================================================================================
+"""
+
+# Setup inputs Provident part a
+data_file = "Harvey.json" 
+input_data = JSON.parsefile("scenarios/$data_file")
+
+harvey_rates = #input path to urdb
+harvey_rates_1 = JSON.parsefile(harvey_rates)
+
+harvey_electric_load = #input path to phillips electric load csv
+
+# Read the CSV file
+harvey_loads_kw = read_csv_without_bom(harvey_electric_load)
+
+# Convert matrix to a one-dimensional array 
+harvey_loads_kw = reshape(harvey_loads_kw, :)  # This flattens the matrix into a one-dimensional array
+harvey_loads_kw = harvey_loads_kw[8761:17520] #take off the hours and leave the loads
+
+println("Correctly obtained data_file")
+
+#cities chosen are Chicago, Boston, Houston, San Francisco
+cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
+lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
+long = [-88.044, -88.044, -88.044, -88.044, -88.044]
+
+#hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
+outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
+
+#critical load fraction
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0]
+
+#fixed generator size given Markham peak load of 2192 kW... may not be used
+#fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
+
+site_analysis = []
+ERP_results = [] #to store resilience results 
+
+sites_iter = eachindex(lat)
+for i in sites_iter
+    input_data_site = copy(input_data)
+    # Site Specific
+    input_data_site["Site"]["latitude"] = lat[i]
+    input_data_site["Site"]["longitude"] = long[i]
+    input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+    input_data_site["ElectricLoad"]["loads_kw"] = harvey_loads_kw
+    input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
+    input_data_site["ElectricTariff"]["urdb_response"] = harvey_rates_1
+    input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
+    input_data_site["PV"]["min_kw"] = 10
+    
+    #if loop statement to not size batteries if existing Generator is over 1096 kW
+    if fixed_generator_size[i] > 1096
+        #generator fixed size
+        input_data_site["Generator"]["existing_kw"] = 2192
+        input_data_site["ElectricStorage"]["max_kw"] = 200
+    else
+        input_data_site["Generator"]["existing_kw"] = 1096
+        input_data_site["ElectricStorage"]["min_kw"] = 10
+    end
+                
+    s = Scenario(input_data_site)
+    inputs = REoptInputs(s)
+
+     # HiGHS solver
+     m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.01,
+     "output_flag" => false, 
+     "log_to_console" => false)
+     )
+
+    m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
+     "time_limit" => 600.0,
+     "mip_rel_gap" => 0.01,
+     "output_flag" => false, 
+     "log_to_console" => false)
+     )            
+
+    results = run_reopt([m1,m2], inputs)
+    append!(site_analysis, [(input_data_site, results)])
+
+    #sleep(60)
+    OutageSurvival = zeros(sites_iter)
+    AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
+    append!(ERP_results, AllResilienceResults)
+    println("================================================")
+    println("================================================")
+    println("Completed Optimization run #$i for Harvey")
+    println("================================================")
+    println("================================================")
+end
+println("Completed optimization")
+
+#write onto JSON file
+write.("./results/harvey.json", JSON.json(site_analysis))
+println("Successfully printed results on JSON file")
+write.("./results/harvey_ERP.json", JSON.json(ERP_results))
+println("Successfully printed Harvey ERP results on JSON file")
+
+# Populate the DataFrame with the results produced and inputs
+df = DataFrame(
+    City = scenarios,
+    PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
+    PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
+    PV_energy_curtailed = [sum(safe_get(site_analysis[i][2], ["PV", "electric_curtailed_series_kw"], 0)) for i in sites_iter],
+    PV_energy_to_Battery_year1 = [sum(safe_get(site_analysis[i][2], ["PV", "electric_to_storage_series_kw"], 0)) for i in sites_iter],
+    Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
+    Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
+    Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
+    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=0) for i in sites_iter], 
+    Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Generator_size = [round(safe_get(site_analysis[i][2], ["Generator", "size_kw"]), digits=0) for i in sites_iter],
+    Generator_annual_fuel_consumption = [round(safe_get(site_analysis[i][2], ["Generator", "annual_fuel_consumption_gal"]), digits=0) for i in sites_iter],
+    Generator_annual_energy_produced = [round(safe_get(site_analysis[i][2], ["Generator", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
+    Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
+    BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
+    LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2"]), digits=2) for i in sites_iter],
+    BAU_LifeCycle_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_tonnes_CO2_bau"]), digits=2) for i in sites_iter],
+    LifeCycle_Emission_Reduction_Fraction = [round(safe_get(site_analysis[i][2], ["Site", "lifecycle_emissions_reduction_CO2_fraction"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_generation_techs = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_generation_tech_capital_costs"]), digits=2) for i in sites_iter],
+    LifeCycle_capex_costs_for_battery = [round(safe_get(site_analysis[i][2], ["Financial", "lifecycle_storage_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_wo_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs"]), digits=2) for i in sites_iter],
+    Initial_upfront_capex_w_incentives = [round(safe_get(site_analysis[i][2], ["Financial", "initial_capital_costs_after_incentives"]), digits=2) for i in sites_iter],
+    Yr1_energy_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_energy_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_demand_cost_after_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_demand_cost_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_total_energy_bill_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_bill_before_tax"]), digits=2) for i in sites_iter],
+    Yr1_export_benefit_before_tax = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "year_one_export_benefit_before_tax"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh = [round(safe_get(site_analysis[i][2], ["Site", "annual_renewable_electricity_kwh"]), digits=2) for i in sites_iter],
+    Annual_renewable_electricity_kwh_fraction = [round(safe_get(site_analysis[i][2], ["Site", "renewable_electricity_fraction"]), digits=2) for i in sites_iter],
+    npv = [round(safe_get(site_analysis[i][2], ["Financial", "npv"]), digits=2) for i in sites_iter],
+    lcc = [round(safe_get(site_analysis[i][2], ["Financial", "lcc"]), digits=2) for i in sites_iter]
+    )
+println(df)
+
+# Define path to xlsx file
+file_storage_location = "./results/cook_county_external_results.xlsx"
+
+# Check if the Excel file already exists
+if isfile(file_storage_location)
+    # Open the Excel file in read-write mode
+    XLSX.openxlsx(file_storage_location, mode="rw") do xf
+        counter = 0
+        while true
+            sheet_name = "Harvey_" * string(counter)
+            try
+                sheet = xf[sheet_name]
+                counter += 1
+            catch
+                break
+            end
+        end
+        sheet_name = "Harvey_" * string(counter)
         # Add new sheet
         XLSX.addsheet!(xf, sheet_name)
         # Write DataFrame to the new sheet
