@@ -432,9 +432,6 @@ outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 #critical load fraction
 critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
 
-#fixed generator size given Markham peak load of 938 kW... may not be used
-fixed_generator_size = [938, 938, 938, 469, 469, 469]
-
 #Existing PV at Markham
 markham_existing_pv = [743, 743, 743, 743, 743, 743]
 

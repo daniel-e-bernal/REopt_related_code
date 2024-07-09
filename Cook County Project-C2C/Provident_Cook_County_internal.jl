@@ -35,12 +35,6 @@ function safe_get(data::Dict{String, Any}, keys::Vector{String}, default=0)
     end
 end
 
-# Setup inputs Cermak part a
-data_file = "CermakA.JSON" 
-input_data = JSON.parsefile("scenarios/$data_file")
-
-cermak_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Cermak New.json"
-cermak_rates_1 = JSON.parsefile(cermak_rates)
 
 function read_csv_without_bom(filepath::String)
     # Read the file content as a string
@@ -252,7 +246,7 @@ data_file = "ProvidentA.JSON"
 input_data = JSON.parsefile("scenarios/$data_file")
 
 provident_rates = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/Custom Rates/Internal Sites/Cook County Internal Provident New.json"
-provident_rates_1 = JSON.parsefile(markham_rates)
+provident_rates_1 = JSON.parsefile(provident_rates)
 
 provident_electric_load = "C:/Users/dbernal/OneDrive - NREL/General - Cook County C2C/Internal - REopt Analysis/REopt Loads/Load_profile_electric_Provident_hourly.csv"
 
@@ -266,19 +260,19 @@ provident_loads_kw = provident_loads_kw[8761:17520] #take off the hours and leav
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
-cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
-lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
-long = [-88.044, -88.044, -88.044, -88.044, -88.044]
+cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
+lat = [ 41.834, 41.834, 41.834, 41.834, 41.834, 41.834]
+long = [-88.044, -88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
-outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
+outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 1.0, 0.75]
+critical_load_frac = [1.0, 1.0, 0.75, 1.0, 1.0, 0.75]
 
 #fixed generator size given Markham peak load of 2192 kW... may not be used
-fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
+fixed_generator_size = [2192, 2192, 2192, 1096, 1096, 1096]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -304,6 +298,7 @@ for i in sites_iter
     else
         input_data_site["Generator"]["existing_kw"] = 1096
         input_data_site["ElectricStorage"]["min_kw"] = 10
+        input_data_site["Generator"]["max_kw"] = 200
     end
                 
     s = Scenario(input_data_site)
@@ -391,7 +386,7 @@ file_storage_location = "./results/Cook_County_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 15
+        counter = 18
         while true
             sheet_name = "ProvidentA_" * string(counter)
             try
