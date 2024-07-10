@@ -25,7 +25,7 @@
                 
     },
     "Generator":{
-        "fuel_cost_per_gallon": 3.39,
+        "fuel_cost_per_gallon": 3.861,
         "fuel_avail_gal": 10000000 
     },
     "PV":{

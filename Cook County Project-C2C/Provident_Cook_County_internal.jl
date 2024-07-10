@@ -269,7 +269,7 @@ outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_re
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 0.75, 1.0, 1.0, 0.75]
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 #fixed generator size given Markham peak load of 2192 kW... may not be used
 fixed_generator_size = [2192, 2192, 2192, 1096, 1096, 1096]
@@ -294,11 +294,11 @@ for i in sites_iter
     if fixed_generator_size[i] > 1096
         #generator fixed size
         input_data_site["Generator"]["existing_kw"] = 2192
-        input_data_site["ElectricStorage"]["max_kw"] = 200
+        input_data_site["ElectricStorage"]["max_kw"] = 100000
     else
         input_data_site["Generator"]["existing_kw"] = 1096
         input_data_site["ElectricStorage"]["min_kw"] = 10
-        input_data_site["Generator"]["max_kw"] = 200
+        input_data_site["Generator"]["max_kw"] = 300
     end
                 
     s = Scenario(input_data_site)
@@ -386,7 +386,7 @@ file_storage_location = "./results/Cook_County_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 18
+        counter = 20
         while true
             sheet_name = "ProvidentA_" * string(counter)
             try
