@@ -1,0 +1,53 @@
+{
+    "Settings":{
+        "time_steps_per_hour": 1
+    },
+    "Site": {
+        "land_acres": 0,
+        "roof_squarefeet": 5100
+        },
+       
+    
+    "Financial": {
+        "om_cost_escalation_rate_fraction": 0.025,
+        "elec_cost_escalation_rate_fraction": 0.017,
+        "existing_boiler_fuel_cost_escalation_rate_fraction": 0.015,
+        "boiler_fuel_cost_escalation_rate_fraction": 0.015,
+        "offtaker_tax_rate_fraction": 0.26,
+        "offtaker_discount_rate_fraction": 0.0638,
+        "third_party_ownership": false,
+        "owner_tax_rate_fraction": 0.0,
+        "owner_discount_rate_fraction": 0.0638,
+        "analysis_years": 25
+    },
+    "ElectricLoad": {
+                
+    },
+    "Generator":{
+        "fuel_cost_per_gallon": 3.861,
+        "fuel_avail_gal": 10000000 
+    },
+    "PV":{
+        "min_kw": 0,
+        "installed_cost_per_kw": 4036,
+        "federal_itc_fraction": 0.4,
+        "location": "roof",
+        "utility_rebate_per_kw": 250
+    },
+    "ElectricStorage":{
+        "min_kw": 10,
+        "total_itc_fraction": 0.3,
+        "total_rebate_per_kw": 250
+    
+    },    
+    "ElectricTariff": {
+        "wholesale_rate": 0.056
+
+    },
+    "ElectricUtility": {
+        "net_metering_limit_kw": 2000,
+        "outage_probabilities": [1.0],
+        "outage_start_time_steps": [1080, 3240, 4320, 6480, 7800]
+        
+    }
+  }

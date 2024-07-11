@@ -241,18 +241,19 @@ Cornerstone Building
 data_file = "Cornerstone.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-cornerstone_rates = 
-cornerstone_rates_1 = JSON.parsefile()
+cornerstone_rates = "./scenarios/Cook County External 2.json"
+cornerstone_rates_1 = JSON.parsefile(cornerstone_rates)
 
 # Define the file path
-cornerstone_electric_load = 
+cornerstone_electric_load = "./excel loads/Cornerstone_load.csv"
 
 # Read the CSV file
 cornerstone_loads_kw = read_csv_without_bom(cornerstone_electric_load)
 
 # Convert matrix to a one-dimensional array 
 cornerstone_loads_kw = reshape(cornerstone_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-cornerstone_loads_kw = cornerstone_loads_kw[8761:17520] #take off the hours and leave the loads
+#cornerstone_loads_kw = cornerstone_loads_kw[1:8760] #take header and leave the loads
+println(length(cornerstone_loads_kw))
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
@@ -265,15 +266,15 @@ outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_re
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+critical_load_frac = [1.0, .75, .50, 1.0, .75, .50]
 
-#fixed generator size given Cermak peak load of 600 kW
-#fixed_generator_size = [600, 600, 600, 300, 300, 300]
+#scenario run 
+scen_num = [1, 1, 1, 2, 2, 2]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
 
-sites_iter = eachindex(lat)
+sites_iter = eachindex(critical_load_frac)
 for i in sites_iter
     input_data_site = copy(input_data)
     # Site Specific
@@ -285,13 +286,14 @@ for i in sites_iter
     input_data_site["ElectricTariff"]["urdb_response"] = cornerstone_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
 
-    #if loop statement to not size batteries if existing Generator is over 300 kW
-    if fixed_generator_size[i] > 300
+    #if loop statement to also put in a generator, we are assuming that Cornerstone has an existing generator
+    # that serves 50% of the peak load
+    #first scenario no generator, second is existing generator
+    if scen_num[i] < 2
         #generator fixed size
-        input_data_site["Generator"]["existing_kw"] = 600
-        
+        input_data_site["Generator"]["max_kw"] = 0
     else
-        input_data_site["Generator"]["existing_kw"] = 300
+        input_data_site["Generator"]["existing_kw"] = 10
         input_data_site["Generator"]["max_kw"] = 0
     end         
     s = Scenario(input_data_site)
@@ -319,7 +321,11 @@ for i in sites_iter
     OutageSurvival = zeros(sites_iter)
     AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
     append!(ERP_results, AllResilienceResults) # Append the resilience results
+    println("===========================================================")
+    println("===========================================================")
     println("Completed Optimization run #$i for Cornerstone")
+    println("===========================================================")
+    println("===========================================================")
 end
 println("Completed optimization")
 
@@ -378,7 +384,7 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 5
         while true
             sheet_name = "Cornerstone_" * string(counter)
             try
@@ -411,18 +417,21 @@ Cottage Grove
 # Setup inputs Markham part a
 data_file = "CottageGrove.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
+println("Successfully converted $data_file into JSON file")
 
-cottagegrove_rates = #input path for urdb
+cottagegrove_rates = "./scenarios/Cook County External 2.json"
 cottagegrove_rates_1 = JSON.parsefile(cottagegrove_rates)
+println("Successfully got general rates")
 
-cottagegrove_electric_load = #input path for csv load profile
+cottagegrove_electric_load = "./excel loads/CottageGrove_load.csv"
 
 # Read the CSV file
 cottagegrove_loads_kw = read_csv_without_bom(cottagegrove_electric_load)
 
 # Convert matrix to a one-dimensional array 
 cottagegrove_loads_kw = reshape(cottagegrove_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-cottagegrove_loads_kw = cottagegrove_loads_kw[8761:17520] #take off the hours and leave the loads
+#cottagegrove_loads_kw = cottagegrove_loads_kw[1:8760] #take header and leave the loads
+println(length(cottagegrove_loads_kw))
 
 println("Correctly obtained data_file")
 
@@ -436,18 +445,15 @@ outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_re
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
+critical_load_frac = [1.0, .75, .50]
 
-#fixed generator size given Markham peak load of 938 kW... may not be used
-#fixed_generator_size = [938, 938, 938, 469, 469, 469]
-
-#Existing PV 
-#markham_existing_pv = [743, 743, 743, 743, 743, 743]
+#scenario run 
+scen_num = [1, 1, 1, 2, 2, 2]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
 
-sites_iter = eachindex(lat)
+sites_iter = eachindex(critical_load_frac)
 for i in sites_iter
     input_data_site = copy(input_data)
     # Site Specific
@@ -459,8 +465,13 @@ for i in sites_iter
     input_data_site["ElectricTariff"]["urdb_response"] = cottagegrove_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
 
-    #existing PV on Markham
-    #input_data_site["PV"]["existing_kw"] = markham_existing_pv[i]
+    #there is no existing generator in Cottage Grove
+    #putting in a generator in case
+    if scen_num[i] < 2
+        input_data_site["Generator"]["max_kw"] = 0
+    else
+        input_data_site["Generator"]["max_kw"] = 13
+    end
                 
     s = Scenario(input_data_site)
     inputs = REoptInputs(s)
@@ -487,7 +498,11 @@ for i in sites_iter
     OutageSurvival = zeros(sites_iter)
     AllResilienceResults, OutageSurvival[i] = ERP_run(REopt_results = results, REopt_post_inputs = inputs, post = input_data_site, maximumoutageduration = outage_durations[i])
     append!(ERP_results, AllResilienceResults)
+    println("===========================================================")
+    println("===========================================================")
     println("Completed Optimization run #$i for Cottage Grove")
+    println("===========================================================")
+    println("===========================================================")
 end
 println("Completed optimization")
 
@@ -496,10 +511,10 @@ write.("./results/cottagegrove.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
 write.("./results/cottagegrove_ERP.json", JSON.json(ERP_results))
 println("Successfuly printed ERP results onto JSON file")
-
+scenariosb = ["Scenario 1", "Scenario 2", "Scenario 3"]
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    City = scenarios,
+    City = scenariosb,
     PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
     PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
@@ -540,7 +555,7 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 5
         while true
             sheet_name = "CottageGrove_" * string(counter)
             try
@@ -573,34 +588,35 @@ Phillips School
 data_file = "PhillipsSchool.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-phillips_rates = #input path to urdb
+phillips_rates = "./scenarios/Cook County External 2.json"
 phillips_rates_1 = JSON.parsefile(phillips_rates)
 
-phillips_electric_load = #input path to phillips electric load csv
+phillips_electric_load = "./excel loads/Phillips_load.csv"
 
 # Read the CSV file
 phillips_loads_kw = read_csv_without_bom(phillips_electric_load)
 
 # Convert matrix to a one-dimensional array 
 phillips_loads_kw = reshape(phillips_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-phillips_loads_kw = phillips_loads_kw[8761:17520] #take off the hours and leave the loads
+#phillips_loads_kw = phillips_loads_kw[1:8760] #take off the header and leave the loads
+println(length(phillips_loads_kw))
 
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
-cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
-lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
-long = [-88.044, -88.044, -88.044, -88.044, -88.044]
+cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
+lat = [ 41.834, 41.834, 41.834, 41.834, 41.834, 41.834]
+long = [-88.044, -88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
 outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 1.0, 0.75]
+critical_load_frac = [1.0, .75, .50, 1.0, .75, .50]
 
-#fixed generator size given Markham peak load of 2192 kW... may not be used
-#fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
+#scenario run 
+scen_num = [1, 1, 1, 2, 2, 2]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -616,16 +632,14 @@ for i in sites_iter
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
     input_data_site["ElectricTariff"]["urdb_response"] = phillips_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
-    input_data_site["PV"]["min_kw"] = 10
+    input_data_site["PV"]["min_kw"] = 0
     
-    #if loop statement to not size batteries if existing Generator is over 1096 kW
-    if fixed_generator_size[i] > 1096
+    #if loop statement 
+    if scen_num[i] < 2
         #generator fixed size
-        input_data_site["Generator"]["existing_kw"] = 2192
-        input_data_site["ElectricStorage"]["max_kw"] = 200
+        input_data_site["ElectricStorage"]["max_kw"] = 0
     else
-        input_data_site["Generator"]["existing_kw"] = 1096
-        input_data_site["ElectricStorage"]["min_kw"] = 10
+        input_data_site["Generator"]["max_kw"] = 56
     end
                 
     s = Scenario(input_data_site)
@@ -713,7 +727,7 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 5
         while true
             sheet_name = "Phillips_" * string(counter)
             try
@@ -746,34 +760,35 @@ Harvey
 data_file = "Harvey.json" 
 input_data = JSON.parsefile("scenarios/$data_file")
 
-harvey_rates = #input path to urdb
+harvey_rates = "./scenarios/Cook County External 2.json"
 harvey_rates_1 = JSON.parsefile(harvey_rates)
 
-harvey_electric_load = #input path to phillips electric load csv
+harvey_electric_load = "./excel loads/Harvey_load.csv"
 
 # Read the CSV file
 harvey_loads_kw = read_csv_without_bom(harvey_electric_load)
 
 # Convert matrix to a one-dimensional array 
 harvey_loads_kw = reshape(harvey_loads_kw, :)  # This flattens the matrix into a one-dimensional array
-harvey_loads_kw = harvey_loads_kw[8761:17520] #take off the hours and leave the loads
+#harvey_loads_kw = harvey_loads_kw[1:8760] #take off the header and leave the loads
+println(length(harvey_loads_kw))
 
 println("Correctly obtained data_file")
 
 #cities chosen are Chicago, Boston, Houston, San Francisco
-cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
-lat = [ 41.834, 41.834, 41.834, 41.834, 41.834]
-long = [-88.044, -88.044, -88.044, -88.044, -88.044]
+cities = ["Chicago", "Chicago", "Chicago", "Chicago", "Chicago", "Chicago"]
+lat = [ 41.834, 41.834, 41.834, 41.834, 41.834, 41.834]
+long = [-88.044, -88.044, -88.044, -88.044, -88.044, -88.044]
 
 #hours of outage to sustain, first set is for 100% meeting load through Generator, second set is for 50% critical load being met by generator
-outage_minimum_sustain = [8, 16, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
-outage_durations = [8, 16, 8, 16, 24] #"ElectricUtility""outage_duration"
+outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_resil_time_steps"] = outage_minimum_sustain[i]
+outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0]
+critical_load_frac = [1.0, .75, .50, 1.0, .75, .50]
 
-#fixed generator size given Markham peak load of 2192 kW... may not be used
-#fixed_generator_size = [2192, 2192, 1096, 1096, 1096]
+#scenario run 
+scen_num = [1, 1, 1, 2, 2, 2]
 
 site_analysis = []
 ERP_results = [] #to store resilience results 
@@ -789,16 +804,14 @@ for i in sites_iter
     input_data_site["ElectricLoad"]["critical_load_fraction"] = critical_load_frac[i]
     input_data_site["ElectricTariff"]["urdb_response"] = harvey_rates_1
     input_data_site["ElectricUtility"]["outage_durations"] = [outage_durations[i]]
-    input_data_site["PV"]["min_kw"] = 10
+    input_data_site["PV"]["min_kw"] = 0
     
     #if loop statement to not size batteries if existing Generator is over 1096 kW
-    if fixed_generator_size[i] > 1096
+    if scen_num[i] < 2
         #generator fixed size
-        input_data_site["Generator"]["existing_kw"] = 2192
-        input_data_site["ElectricStorage"]["max_kw"] = 200
+        input_data_site["Generator"]["max_kw"] = 0
     else
-        input_data_site["Generator"]["existing_kw"] = 1096
-        input_data_site["ElectricStorage"]["min_kw"] = 10
+        input_data_site["Generator"]["max_kw"] = 84
     end
                 
     s = Scenario(input_data_site)
@@ -886,7 +899,7 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 5
         while true
             sheet_name = "Harvey_" * string(counter)
             try

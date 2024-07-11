@@ -4,8 +4,7 @@
     },
     "Site": {
         "land_acres": 0,
-        "roof_squarefeet": 17500,
-        "CO2_emissions_reduction_max_fraction": 1.00
+        "roof_squarefeet": 15000
         },
        
     
@@ -25,11 +24,11 @@
                 
     },
     "Generator":{
-        "fuel_cost_per_gallon": 3.39,
+        "fuel_cost_per_gallon": 3.861,
         "fuel_avail_gal": 10000000 
     },
     "PV":{
-        "min_kw": 25,
+        "min_kw": 0,
         "installed_cost_per_kw": 4036,
         "federal_itc_fraction": 0.4,
         "location": "roof",
