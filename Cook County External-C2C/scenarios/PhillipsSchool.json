@@ -36,7 +36,7 @@
         "utility_rebate_per_kw": 250
     },
     "ElectricStorage":{
-        "min_kw": 10,
+        "min_kw": 0,
         "total_itc_fraction": 0.3,
         "total_rebate_per_kw": 250
     

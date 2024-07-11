@@ -266,7 +266,7 @@ outage_minimum_sustain = [8, 16, 24, 8, 16, 24] #input_data_site["Site"]["min_re
 outage_durations = [8, 16, 24, 8, 16, 24] #"ElectricUtility""outage_duration"
 
 #critical load fraction
-critical_load_frac = [1.0, .75, .50, 1.0, .75, .50]
+critical_load_frac = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 #scenario run 
 scen_num = [1, 1, 1, 2, 2, 2]
@@ -380,7 +380,7 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 6
+        counter = 11
         while true
             sheet_name = "Harvey_" * string(counter)
             try

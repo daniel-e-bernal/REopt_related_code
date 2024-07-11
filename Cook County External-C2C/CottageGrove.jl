@@ -343,10 +343,10 @@ write.("./results/cottagegrove.json", JSON.json(site_analysis))
 println("Successfully printed results on JSON file")
 write.("./results/cottagegrove_ERP.json", JSON.json(ERP_results))
 println("Successfuly printed ERP results onto JSON file")
-
+scenariosb = ["Scenario 1", "Scenario 2", "Scenario 3"]
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    City = scenarios,
+    City = scenariosb,
     PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     PV_year1_production = [round(safe_get(site_analysis[i][2], ["PV", "year_one_energy_produced_kwh"]), digits=0) for i in sites_iter],
     PV_annual_energy_production_avg = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
@@ -357,8 +357,11 @@ df = DataFrame(
     Battery_size_kW = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kw"]), digits=0) for i in sites_iter], 
     Battery_size_kWh = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "size_kwh"]), digits=0) for i in sites_iter], 
     Battery_serve_electric_load = [sum(safe_get(site_analysis[i][2], ["ElectricStorage", "storage_to_load_series_kw"], 0)) for i in sites_iter], 
-    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=2) for i in sites_iter], 
+    Battery_initial_capex_cost = [round(safe_get(site_analysis[i][2], ["ElectricStorage", "initial_capital_cost"]), digits=0) for i in sites_iter], 
     Grid_Electricity_Supplied_kWh_annual = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_energy_supplied_kwh"]), digits=0) for i in sites_iter],
+    Generator_size = [round(safe_get(site_analysis[i][2], ["Generator", "size_kw"]), digits=0) for i in sites_iter],
+    Generator_annual_fuel_consumption = [round(safe_get(site_analysis[i][2], ["Generator", "annual_fuel_consumption_gal"]), digits=0) for i in sites_iter],
+    Generator_annual_energy_produced = [round(safe_get(site_analysis[i][2], ["Generator", "annual_energy_produced_kwh"]), digits=0) for i in sites_iter],
     Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     ElecUtility_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "annual_emissions_tonnes_CO2"]), digits=4) for i in sites_iter],
     BAU_Total_Annual_Emissions_CO2 = [round(safe_get(site_analysis[i][2], ["Site", "annual_emissions_tonnes_CO2_bau"]), digits=4) for i in sites_iter],
@@ -387,12 +390,12 @@ file_storage_location = "./results/cook_county_external_results.xlsx"
 if isfile(file_storage_location)
     # Open the Excel file in read-write mode
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
-        counter = 0
+        counter = 10
         while true
             sheet_name = "CottageGrove_" * string(counter)
             try
                 sheet = xf[sheet_name]
-                counter += 1
+                counter += 2
             catch
                 break
             end
