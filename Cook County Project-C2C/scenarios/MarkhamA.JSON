@@ -31,7 +31,7 @@
     },
     "ElectricStorage":{
         "total_itc_fraction": 0.3,
-        "total_rebate_per_kw": 250
+        "total_rebate_per_kwh": 250
     },    
     "ElectricTariff": {
         "wholesale_rate": 0.056
