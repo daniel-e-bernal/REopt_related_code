@@ -37,7 +37,7 @@
         "installed_cost_per_kwh": 455,
         "replace_cost_per_kw": 715.0,
         "replace_cost_per_kwh": 318.0,
-        "total_itc_fraction": 0.3,
+        "total_itc_fraction": 0.4,
         "total_rebate_per_kwh": 250
 
     },

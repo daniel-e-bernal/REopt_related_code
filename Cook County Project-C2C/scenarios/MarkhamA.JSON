@@ -30,7 +30,7 @@
         
     },
     "ElectricStorage":{
-        "total_itc_fraction": 0.3,
+        "total_itc_fraction": 0.4,
         "total_rebate_per_kwh": 250
     },    
     "ElectricTariff": {
